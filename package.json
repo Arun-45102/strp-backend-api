@@ -1,0 +1,22 @@
+{
+  "name": "strp-backend-api",
+  "version": "1.0.0",
+  "description": "Fetching Discord Details using Express, Storing Data in Mongo DB",
+  "license": "MIT",
+  "author": "Arun Kumar M",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "nodemon ./server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "discord.js": "^14.21.0",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
