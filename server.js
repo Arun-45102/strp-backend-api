@@ -1,6 +1,5 @@
 import "dotenv/config";
 import express from "express";
-import { createServer } from "http";
 import cors from "cors";
 import { Client, GatewayIntentBits } from "discord.js";
 import swaggerUi from "swagger-ui-express";
@@ -10,8 +9,8 @@ const PORT = process.env.PORT;
 const TOKEN = process.env.TOKEN;
 
 const app = express();
-app.use(cors());
-const server = createServer(app);
+app.use(cors({ origin: "http://localhost:4200" }));
+app.use(express.json());
 
 const client = new Client({
   intents: [
@@ -25,12 +24,14 @@ import channelsRoutes from "./routes/channels.js";
 import guildRoutes from "./routes/guild.js";
 import rolesRoutes from "./routes/roles.js";
 import userRoutes from "./routes/users.js";
+import authRoutes from "./routes/auth.js";
 
-app.use("/api", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use("/swaggerapi", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/strp-api/discord/channels", channelsRoutes);
 app.use("/strp-api/discord/guild", guildRoutes);
 app.use("/strp-api/discord/roles", rolesRoutes);
 app.use("/strp-api/discord/users", userRoutes);
+app.use("/auth/discord", authRoutes);
 
 export default function getGuild(guildID) {
   const guild = client.guilds.fetch(guildID);
@@ -42,7 +43,7 @@ client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
-server.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-  console.log(`Swagger is running on port ${PORT}/strp-api`);
+  console.log(`Swagger is running on port ${PORT}/swaggerapi`);
 });

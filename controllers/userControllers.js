@@ -1,6 +1,6 @@
 import getGuild from "../server.js";
 
-const SERVERID = process.env.SERVERID;
+export const SERVERID = process.env.SERVERID;
 
 export async function OnlineMembers(req, res) {
   try {
@@ -39,7 +39,7 @@ export async function UserRoles(req, res) {
   }
 }
 
-async function getOnlineMembers(guildID) {
+export async function getOnlineMembers(guildID) {
   const guild = await getGuild(guildID);
   const getMembers = await guild.members.fetch();
   const onlineMembers = getMembers.filter(
