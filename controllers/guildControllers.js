@@ -26,7 +26,7 @@ export async function ScheduledEvents(req, res) {
   }
 }
 
-async function getGuildData(guildID) {
+export async function getGuildData(guildID) {
   const guild = await getGuild(guildID);
   return guild;
 }
@@ -42,5 +42,6 @@ async function getScheduledEvents(guildID) {
 
 export default {
   GuildData,
-  ScheduledEvents
+  ScheduledEvents,
+  getGuildData
 };

@@ -12,6 +12,8 @@ const app = express();
 app.use(cors({ origin: "http://localhost:4200" }));
 app.use(express.json());
 
+connectDB();
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -25,6 +27,7 @@ import guildRoutes from "./routes/guild.js";
 import rolesRoutes from "./routes/roles.js";
 import userRoutes from "./routes/users.js";
 import authRoutes from "./routes/auth.js";
+import { connectDB } from "./db/config.js";
 
 app.use("/swaggerapi", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/strp-api/discord/channels", channelsRoutes);
