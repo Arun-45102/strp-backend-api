@@ -60,12 +60,13 @@ async function getUserData(guildID, userID) {
 async function getUserRoles(guildID, userID) {
   const guild = await getGuild(guildID);
   const getMembers = await guild.members.fetch();
-  const roles = {};
+  const roles = [];
   const userData = getMembers.filter(
     (member) => member.id && member.id == userID
   );
-  userData.roles.cache.forEach((role) => {
-    roles[role.id] = role.name;
+  const userRoles = userData.first();
+  userRoles.roles.cache.forEach((role) => {
+    roles.push(role);
   });
   return roles;
 }

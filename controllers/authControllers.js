@@ -1,14 +1,19 @@
 import jwt from "jsonwebtoken";
 import fetch from "node-fetch";
 
+import User from "../models/User.js";
+import { getGuildData } from "./guildControllers.js";
+
+const SERVERID = process.env.SERVERID;
+
 const CLIENT_ID = process.env.CLIENTID;
 const CLIENT_SECRET = process.env.CLIENTSECERT;
 const REDIRECT_URI = `${process.env.REDIRECTURI}/auth/discord/callback`;
 const JWT_SECRET = process.env.SUPER_SECRET_JWT_KEY;
 const FRONTEND_URL = process.env.FRONTENDURL;
 
-const DISCORD_API_BASE = 'https://discord.com/api/v10';
-const DISCORD_AUTH_URL = 'https://discord.com/oauth2/authorize';
+const DISCORD_API_BASE = "https://discord.com/api/v10";
+const DISCORD_AUTH_URL = "https://discord.com/oauth2/authorize";
 const DISCORD_TOKEN_URL = `${DISCORD_API_BASE}/oauth2/token`;
 const DISCORD_USER_URL = `${DISCORD_API_BASE}/users/@me`;
 
@@ -77,16 +82,43 @@ export async function CallbackURL(req, res) {
     }
 
     const userData = await userResponse.json();
-    const payload = {
-      id: userData.id,
-      username: userData.username,
-      discriminator: userData.discriminator,
-      avatar: userData.avatar,
-      email: userData.email,
-    };
-
-    const authToken = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" }); // Token expires in 1 hour
-    res.redirect(`${FRONTEND_URL}/login?token=${authToken}`);
+    const guildData = await getGuildData(SERVERID);
+    const getMembers = await guildData.members.fetch();
+    const fetchMember = getMembers.filter((member) => {
+      return member.id == userData.id;
+    });
+    const member = fetchMember.first();
+    
+    if (member) {
+      try {
+        const payload = {
+          discordID: userData.id,
+          username: userData.username,
+          discriminator: userData.discriminator,
+          avatar: userData.avatar,
+          email: userData.email,
+          banner: userData.banner,
+          global_name: userData.global_name,
+          tag: userData.primary_guild.tag,
+        };
+        let user = await User.findOne({ email: userData.email });
+        if (user) {
+          const authToken = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" }); // Token expires in 1 hour
+          res.redirect(`${FRONTEND_URL}/login?token=${authToken}`);
+        } else {
+          user = new User(payload);
+          await user.save();
+          const authToken = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" }); // Token expires in 1 hour
+          res.redirect(`${FRONTEND_URL}/login?token=${authToken}`);
+        }
+      } catch (err) {
+        res.status(500).json({ message: "Server Error", error: err.message });
+      }
+    }
+    else {
+      const errorMessage = encodeURIComponent('User not found in discord, Kindly join and try again...');
+      res.redirect(`${FRONTEND_URL}/login?error=${errorMessage}`)
+    }
   } catch (error) {
     console.error("Server error during Discord OAuth callback:", error);
     res.status(500).json({ error: "Internal server error." });
