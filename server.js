@@ -9,7 +9,24 @@ const PORT = process.env.PORT;
 const TOKEN = process.env.TOKEN;
 
 const app = express();
-app.use(cors({ origin: "http://localhost:4200" }));
+
+const allowedOrigins = [
+  'http://localhost:4200',
+  'https://strp-frontend.vercel.app'
+];
+
+// CORS options delegate
+const corsOptionsDelegate = function (req, callback) {
+  const origin = req.header('Origin');
+  if (allowedOrigins.includes(origin)) {
+    callback(null, { origin: true }); // allow this origin
+  } else {
+    callback(null, { origin: false }); // block this origin
+  }
+};
+
+
+app.use(cors(corsOptionsDelegate));
 app.use(express.json());
 
 connectDB();
