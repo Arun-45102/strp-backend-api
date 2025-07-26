@@ -13,7 +13,7 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:4200',
   'https://strp-frontend.vercel.app',
-  'https://app.senthamizhroleplay.in/
+  'https://app.senthamizhroleplay.in'
 ];
 
 // CORS options delegate
