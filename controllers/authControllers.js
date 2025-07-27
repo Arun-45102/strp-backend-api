@@ -3,6 +3,7 @@ import fetch from "node-fetch";
 
 import User from "../models/User.js";
 import { getGuildData } from "./guildControllers.js";
+import { getUserRole } from "./userControllers.js";
 
 const SERVERID = process.env.SERVERID;
 
@@ -16,9 +17,10 @@ const DISCORD_API_BASE = "https://discord.com/api/v10";
 const DISCORD_AUTH_URL = "https://discord.com/oauth2/authorize";
 const DISCORD_TOKEN_URL = `${DISCORD_API_BASE}/oauth2/token`;
 const DISCORD_USER_URL = `${DISCORD_API_BASE}/users/@me`;
+const DISCORD_USER_URL_GUILDS = `${DISCORD_API_BASE}/users/@me/guilds`;
 
 export async function AuthorizeURL(req, res) {
-  const scopes = ["identify", "email"].join(" ");
+  const scopes = ["identify", "email", "guilds"].join(" ");
   const authorizeUrl = `${DISCORD_AUTH_URL}?response_type=code&client_id=${CLIENT_ID}&scope=${encodeURIComponent(
     scopes
   )}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&prompt=consent`;
@@ -52,7 +54,6 @@ export async function CallbackURL(req, res) {
         grant_type: "authorization_code",
         code: code,
         redirect_uri: REDIRECT_URI,
-        scope: "identify email",
       }).toString(),
     });
 
@@ -73,6 +74,12 @@ export async function CallbackURL(req, res) {
       },
     });
 
+    const userGuilds = await fetch(DISCORD_USER_URL_GUILDS, {
+      headers: {
+        authorization: `Bearer ${access_token}`,
+      },
+    });
+
     if (!userResponse.ok) {
       const errorData = await userResponse.json();
       console.error("Error fetching user data:", errorData);
@@ -82,14 +89,13 @@ export async function CallbackURL(req, res) {
     }
 
     const userData = await userResponse.json();
+    const userGuild = await userGuilds.json();
+    const userRoles = await getUserRole(SERVERID, userData.id);
     const guildData = await getGuildData(SERVERID);
-    const getMembers = await guildData.members.fetch();
-    const fetchMember = getMembers.filter((member) => {
-      return member.id == userData.id;
+    const fetchMember = userGuild.filter((guild) => {
+      return guild.id == guildData.id;
     });
-    const member = fetchMember.first();
-    
-    if (member) {
+    if (fetchMember.length > 0) {
       try {
         const payload = {
           discordID: userData.id,
@@ -100,9 +106,15 @@ export async function CallbackURL(req, res) {
           banner: userData.banner,
           global_name: userData.global_name,
           tag: userData.primary_guild.tag,
+          roles: userRoles,
+          access_token: access_token,
+          token_expiry: Date.now() + expires_in * 1000,
         };
         let user = await User.findOne({ email: userData.email });
         if (user) {
+          user.access_token = access_token;
+          user.token_expiry = payload.token_expiry;
+          await user.save();
           const authToken = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" }); // Token expires in 1 hour
           res.redirect(`${FRONTEND_URL}/login?token=${authToken}`);
         } else {
@@ -114,10 +126,11 @@ export async function CallbackURL(req, res) {
       } catch (err) {
         res.status(500).json({ message: "Server Error", error: err.message });
       }
-    }
-    else {
-      const errorMessage = encodeURIComponent('User not found in discord, Kindly join and try again...');
-      res.redirect(`${FRONTEND_URL}/login?error=${errorMessage}`)
+    } else {
+      const errorMessage = encodeURIComponent(
+        "User not found in discord, Kindly join and try again..."
+      );
+      res.redirect(`${FRONTEND_URL}/login?error=${errorMessage}`);
     }
   } catch (error) {
     console.error("Server error during Discord OAuth callback:", error);

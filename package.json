@@ -17,6 +17,9 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.16.4",
     "node-fetch": "^3.3.2",
+    "puppeteer": "^24.15.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "ws": "^8.18.3"
