@@ -50,4 +50,23 @@ router.get('/getUserData/:id', userControllers.UserData);
  */
 router.get('/getUserRoles/:id', userControllers.UserRoles);
 
+/**
+ * @openapi
+ * /strp-api/discord/users/getUserRole/{id}:
+ *   get:
+ *     description: Get the Userroles of the user in Particular Guild
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Numeric ID of the user to get
+ *     responses:
+ *       200:
+ *         description: Success
+ */
+router.get('/getUserRole/:id', userControllers.UserRole);
+
 export default router;
